@@ -1,0 +1,33 @@
+# Render Blueprint: one web service serving both the API and the built React app.
+# A persistent disk needs a paid instance type. For the free tier or several instances, use Postgres (see README).
+services:
+  - type: web
+    name: peakage-smart-assign
+    runtime: python
+    plan: starter
+    region: singapore
+    buildCommand: ./build.sh
+    startCommand: cd backend && uvicorn app.main:app_factory --factory --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: smart-assign-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: NODE_VERSION
+        value: 22.22.2
+      - key: ROUTING_MODE
+        value: demo # change to "live" after adding OLA_MAPS_API_KEY
+      - key: OLA_MAPS_API_KEY
+        sync: false # entered in the Render dashboard, never committed
+      - key: DATABASE_URL
+        value: sqlite:////var/data/smart_assign.db
+      - key: STATIC_DIR
+        value: static
+      - key: APP_ACCESS_TOKEN
+        generateValue: true # shared passcode, visible in the service's Environment tab
+      - key: FRONTEND_ORIGIN
+        value: "" # only needed if the frontend is hosted on a different origin
